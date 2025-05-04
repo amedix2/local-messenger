@@ -42,7 +42,7 @@ class DatabaseManager:
                     id SERIAL PRIMARY KEY,
                     text VARCHAR(1024) NOT NULL,
                     username VARCHAR(100) NOT NULL,
-                    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             self.conn.commit()
@@ -50,29 +50,29 @@ class DatabaseManager:
             logging.error(e)
             self.conn.rollback()
 
-    def add_message(self, text: str, username: str, time: datetime = datetime.now()):
+    def add_message(self, text: str, username: str) -> bool:
         try:
             self.cur.execute("""
-            INSERT INTO messages (text, username, time) VALUES (%s, %s, %s)
-            """, (text, username, time))
+            INSERT INTO messages (text, username) VALUES (%s, %s)
+            """, (text, username))
             self.conn.commit()
-            logging.info(f'Added message {text} from {username} at {time}')
+            logging.info(f'Added message {text} from {username}')
+            return True
         except Exception as e:
             logging.error(e)
             self.conn.rollback()
+            return False
 
-    def get_messages(self):
+    def get_messages(self) -> list[tuple[str, str, datetime]]:
         try:
-            self.cur.execute("""
-            SELECT * FROM messages
-            """)
+            self.cur.execute("SELECT text, username, time FROM messages ORDER BY time ASC")
             return self.cur.fetchall()
         except Exception as e:
             logging.error(e)
+            return []
 
 
 if __name__ == '__main__':
-    db = DatabaseManager(name=os.getenv('PG_DB_NAME'), user=os.getenv('PG_ADMIN'), password=os.getenv('PG_ADMIN_PASS'))
-    db.connect()
-    db.init_db()
-    db.close()
+    with DatabaseManager(name=os.getenv('PG_DB_NAME'), user=os.getenv('PG_ADMIN'),
+                         password=os.getenv('PG_ADMIN_PASS')) as db:
+        db.init_db()
