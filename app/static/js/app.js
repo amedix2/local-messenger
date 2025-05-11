@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     let username = sessionStorage.getItem('username');
     if (!username) {
         username = prompt('Please enter your username:');
@@ -11,12 +11,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.getElementById('username').textContent = username;
 
-    function fetchMessages() {
+    let lastMessageCount = 0;
+
+    function fetchMessages(scrollToBottom = false) {
         fetch('/get_messages')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    renderMessages(data.status);
+                    const newMessages = data.status;
+                    if (newMessages.length !== lastMessageCount || scrollToBottom) {
+                        renderMessages(newMessages);
+                        lastMessageCount = newMessages.length;
+                    }
                 } else {
                     console.error('Failed to fetch messages:', data.error);
                 }
@@ -27,29 +33,32 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderMessages(messages) {
         const messagesDiv = document.getElementById('messages');
         messagesDiv.innerHTML = '';
+
         messages.forEach(message => {
-            const [text, username, time] = message;
+            const [text, usernameMsg, time] = message;
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
-            if (username === sessionStorage.getItem('username')) {
+            if (usernameMsg === sessionStorage.getItem('username')) {
                 messageDiv.classList.add('own-message');
             }
+
             messageDiv.innerHTML = `
                 <div class="message-header">
-                    <span class="username">${username}</span>
+                    <span class="username">${usernameMsg}</span>
                     <span class="time">${new Date(time).toLocaleTimeString()}</span>
                 </div>
                 <div class="message-text">${text}</div>
             `;
             messagesDiv.appendChild(messageDiv);
         });
+
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
     fetchMessages();
     setInterval(fetchMessages, 1000);
 
-    document.getElementById('message-form').addEventListener('submit', function(event) {
+    document.getElementById('message-form').addEventListener('submit', function (event) {
         event.preventDefault();
         const messageInput = document.getElementById('message-input');
         const text = messageInput.value.trim();
@@ -61,16 +70,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({text: text, username: username})
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    messageInput.value = '';
-                    fetchMessages();
-                } else {
-                    console.error('Failed to add message:', data.error);
-                }
-            })
-            .catch(error => console.error('Error adding message:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        messageInput.value = '';
+                        fetchMessages(true);
+                    } else {
+                        console.error('Failed to add message:', data.error);
+                    }
+                })
+                .catch(error => console.error('Error adding message:', error));
         }
     });
 });

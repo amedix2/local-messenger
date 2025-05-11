@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Messenger</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
@@ -12,11 +13,11 @@
 </div>
 <div class="chat-container">
     <div id="messages"></div>
-    <form id="message-form">
-        <input type="text" id="message-input" placeholder="Type your message...">
-        <button type="submit">Send</button>
-    </form>
 </div>
+<form id="message-form">
+    <input type="text" id="message-input" placeholder="Type your message...">
+    <button type="submit">Send</button>
+</form>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
